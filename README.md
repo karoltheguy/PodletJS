@@ -1,6 +1,7 @@
 # PodletJS
 
 JavaScript port of [Podlet](https://github.com/containers/podlet) - Generate Podman Quadlet files from Docker run commands and compose files.
+This port was created with the help of Claude Code. Any suggestions of fixes are welcome.
 
 ## Phase 1: Core Structure ✅ COMPLETE
 ## Phase 2: Docker Run Parser ✅ COMPLETE  
