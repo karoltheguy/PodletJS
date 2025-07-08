@@ -20,7 +20,6 @@ Complete Docker Compose YAML parsing with multi-service support and systemd inte
 - **Type system**: All core data structures (Volume, PortMapping, Environment, etc.)
 - **Main interface**: PodletJS class with complete API
 - **Validation**: Container validation and error handling
-- **Comprehensive testing**: 200+ test cases covering all scenarios
 
 ### Usage
 
