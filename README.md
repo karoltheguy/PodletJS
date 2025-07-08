@@ -1,11 +1,9 @@
 # PodletJS
 
-JavaScript port of [Podlet](https://github.com/containers/podlet) - Generate Podman Quadlet files from Docker run commands and compose files.
-This port was created with the help of Claude Code. Any suggestions of fixes are welcome.
-
-## Phase 1: Core Structure ✅ COMPLETE
-## Phase 2: Docker Run Parser ✅ COMPLETE  
-## Phase 3: Compose File Parser ✅ COMPLETE
+JavaScript port of [Podlet](https://github.com/containers/podlet)
+Generate Podman Quadlet files from Docker run commands and compose files.
+This port was created with the help of Claude Code.
+I'm cleaning up this code but any suggestions of fixes are welcome.
 
 Complete Docker Compose YAML parsing with multi-service support and systemd integration.
 
@@ -30,11 +28,6 @@ Complete Docker Compose YAML parsing with multi-service support and systemd inte
 import { PodletJS } from './src/index.js';
 
 const podlet = new PodletJS();
-
-// Parse docker run commands
-const dockerQuadlet = podlet.dockerRunToQuadlet(`
-  docker run -d --name web-app -p 8080:80 -e NODE_ENV=production nginx:alpine
-`);
 
 // Parse docker-compose files
 const composeYaml = `
@@ -74,7 +67,8 @@ console.log('Web service:', composeQuadlets.web);
 console.log('DB service:', composeQuadlets.db);
 ```
 
-Output:
+Outputs:
+1st Quadlet
 ```ini
 # Web service with dependency on db
 [Unit]
@@ -87,6 +81,25 @@ Image=nginx:alpine
 ContainerName=web
 PublishPort=8080:80
 Environment=NODE_ENV=production
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+2nd Quadlet
+```ini
+[Unit]
+Description=My Application Stack
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=postgres:15
+ContainerName=db
+Volume=db_data:/var/lib/postgresql/data
+Environment=POSTGRES_DB=myapp
 
 [Service]
 Restart=always
@@ -140,10 +153,6 @@ node test/docker-run-test.js
 # Run comprehensive compose parser tests
 node test/compose-test.js
 ```
-
-## Status: ✅ FEATURE COMPLETE
-
-PodletJS now provides **complete functionality** for converting Docker run commands and Compose files to Podman Quadlet format.
 
 ### Possible Future Enhancements
 
