@@ -14,8 +14,6 @@ PodletJS successfully implements the core functionality of the original Podlet (
 
 ## Future Enhancements
 
-### 🔄 Phase 4: Advanced Features (Optional)
-
 #### 1. Pod Generation Support
 **Status**: Not implemented  
 **Effort**: Medium  
@@ -180,31 +178,9 @@ npx podlet-js compose docker-compose.yml --output ./quadlets/
 
 ---
 
-## Implementation Notes
-
-### Architecture Decisions
-- **Modular design** makes adding features straightforward
-- **Parser pattern** established for new input formats
-- **Generator pattern** established for new output formats
-- **Test infrastructure** supports comprehensive feature testing
-
-### Non-Goals
-- **Docker compatibility** - This is a Podman/Quadlet tool
-- **Runtime management** - Quadlet/systemd handles that
-- **Container orchestration** - Use Kubernetes for that
-- **GUI interface** - CLI/library is the focus
-
----
-
 ## Contributing
 
-If you're interested in implementing any of these features:
-
-1. **Start with high-priority items** for maximum impact
-2. **Follow existing patterns** in the codebase
-3. **Add comprehensive tests** for any new features
-4. **Update documentation** including this roadmap
-5. **Consider backward compatibility** for any API changes
+Send pull a requests if you're interested in implementing any of these features.
 
 ---
 
@@ -214,5 +190,3 @@ If you're interested in implementing any of these features:
 - **v0.2.0**: CLI interface + Pod generation
 - **v0.3.0**: Build context handling + Version compatibility  
 - **v1.0.0**: Production hardening + Extended features
-
-The project is already **production-ready** at v0.1.0 for most use cases!
