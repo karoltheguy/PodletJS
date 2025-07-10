@@ -5,20 +5,29 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "node test/test.js",
-    "test:docker": "node test/docker-run-test.js",
-    "test:compose": "node test/compose-test.js",
+    "test": "jest",
     "test:all": "npm test && npm run test:docker && npm run test:compose",
     "start": "node src/index.js"
   },
-  "keywords": ["podman", "quadlet", "docker", "containers", "systemd"],
+  "keywords": [
+    "podman",
+    "quadlet",
+    "docker",
+    "containers",
+    "systemd"
+  ],
   "author": "Converted from Podlet (Rust)",
   "license": "MPL-2.0",
   "dependencies": {
     "js-yaml": "^4.1.0",
     "minimist": "^1.2.8"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "babel-jest": "^30.0.4",
+    "jest": "^30.0.4"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/containers/podlet"

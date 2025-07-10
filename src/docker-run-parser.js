@@ -57,6 +57,25 @@ export class DockerRunParser {
    * Parse a single flag and its arguments
    */
   _parseFlag(flag, args, startIndex, container) {
+    // Handle flags with embedded values (--flag=value)
+    if (flag.includes('=')) {
+      const [flagPart] = flag.split('=', 1);
+      const cleanFlag = flagPart.replace(/^-+/, '');
+      const mapping = this.flagMappings[cleanFlag];
+      
+      if (!mapping) {
+        // Unknown flag with embedded value - add to podmanArgs as-is
+        return this._handleUnknownFlag(flag, args, startIndex, container);
+      }
+      
+      // For known flags with embedded values, we need to split and handle
+      const [, valuePart] = flag.split('=', 2);
+      const modifiedArgs = [...args];
+      modifiedArgs[startIndex] = flagPart;
+      modifiedArgs.splice(startIndex + 1, 0, valuePart);
+      return mapping.handler(modifiedArgs, startIndex, container);
+    }
+    
     // Handle both --flag and -f formats
     const cleanFlag = flag.replace(/^-+/, '');
     const mapping = this.flagMappings[cleanFlag];
@@ -80,14 +99,98 @@ export class DockerRunParser {
     
     let nextIndex = startIndex + 1;
     
-    // Check if the next argument is a value (not another flag)
+    // For flags with embedded values (--flag=value), we're done
+    if (flag.includes('=')) {
+      container.podmanArgs = podmanArgs;
+      return { nextIndex };
+    }
+    
+    // For flags without embedded values, decide whether to consume the next argument
     if (nextIndex < args.length && !args[nextIndex].startsWith('-')) {
-      podmanArgs += ' ' + this._escapeArg(args[nextIndex]);
-      nextIndex++;
+      const nextArg = args[nextIndex];
+      
+      // Check if the next argument looks like a flag value rather than an image name
+      if (this._looksLikeFlagValue(nextArg, args, nextIndex)) {
+        podmanArgs += ' ' + this._escapeArg(nextArg);
+        nextIndex++;
+      }
     }
     
     container.podmanArgs = podmanArgs;
     return { nextIndex };
+  }
+
+  /**
+   * Determine if an argument looks like a flag value rather than an image name
+   */
+  _looksLikeFlagValue(arg, args, argIndex) {
+    // Clear indicators that this is a flag value
+    if (arg.includes('=') || 
+        arg.match(/^\d+[kmgtKMGT]?$/) || // memory/size values like "128m", "1G"
+        arg.match(/^\d+(\.\d+)?$/) ||    // numeric values like "2", "1.5"
+        arg.match(/^[a-z][a-z0-9]*:/) || // values with format like "tcp:", "host:"
+        arg.includes(':') && !arg.includes('/')) { // port mappings but not image names
+      return true;
+    }
+    
+    // Look ahead to see if there's a more likely image name later
+    for (let i = argIndex + 1; i < args.length; i++) {
+      const laterArg = args[i];
+      if (laterArg.startsWith('-')) {
+        continue; // Skip flags
+      }
+      
+      // If we find something that looks more like an image name, 
+      // then the current arg is probably a flag value
+      if (this._looksLikeImageName(laterArg) && !this._looksLikeImageName(arg)) {
+        return true;
+      }
+      
+      // If we find something that looks like a command, stop looking
+      if (this._looksLikeCommand(laterArg)) {
+        break;
+      }
+    }
+    
+    // If the argument doesn't look like an image name, it's probably a flag value
+    return !this._looksLikeImageName(arg);
+  }
+
+  /**
+   * Determine if an argument looks like an image name
+   */
+  _looksLikeImageName(arg) {
+    // Common image names (definitive matches)
+    const commonImages = ['nginx', 'ubuntu', 'alpine', 'node', 'python', 'java', 'redis', 'mysql', 'postgres', 'mongo', 'httpd', 'tomcat', 'php', 'ruby', 'golang', 'gcc', 'openjdk', 'busybox'];
+    if (commonImages.includes(arg.toLowerCase())) {
+      return true;
+    }
+    
+    // Registry prefixes like "docker.io/nginx" or "gcr.io/project/image"
+    if (arg.includes('/')) {
+      return true;
+    }
+    
+    // Tags like "nginx:latest" or "node:16"
+    if (arg.includes(':') && !arg.startsWith(':')) {
+      return true;
+    }
+    
+    // Image names with clear naming patterns
+    if (arg.match(/^[a-z0-9]+[a-z0-9._-]*$/i) && 
+        (arg.includes('-') || arg.includes('_') || arg.includes('.') || arg.length > 6)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Determine if an argument looks like a command
+   */
+  _looksLikeCommand(arg) {
+    // Commands often start with common command names or paths
+    return arg.match(/^(\/|sh|bash|ls|cat|echo|python|node|npm|yarn|make|gcc|java|\.)/);
   }
 
   /**
