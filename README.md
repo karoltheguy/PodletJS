@@ -25,8 +25,8 @@ Complete Docker Compose YAML parsing with multi-service support and systemd inte
 
 ```bash
 # Clone the repository
-git clone https://github.com/karoltheguy/podlet-js.git
-cd podlet-js
+git clone https://github.com/karoltheguy/podletjs.git
+cd podletjs
 
 # Install dependencies
 npm install
