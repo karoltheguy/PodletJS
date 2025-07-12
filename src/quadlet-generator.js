@@ -448,9 +448,9 @@ export class QuadletGenerator {
    * Escape values that might contain spaces or special characters
    */
   static escapeValue(value) {
-    // Simple escaping - wrap in quotes if contains spaces
+    // Proper escaping - escape backslashes first, then quotes
     if (typeof value === 'string' && value.includes(' ')) {
-      return `"${value.replace(/"/g, '\\"')}"`;
+      return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
     }
     return value;
   }
