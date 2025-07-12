@@ -16,11 +16,12 @@
     "containers",
     "systemd"
   ],
-  "author": "Converted from Podlet (Rust)",
+  "author": "KarolTheGuy",
   "license": "MPL-2.0",
   "dependencies": {
     "js-yaml": "^4.1.0",
-    "minimist": "^1.2.8"
+    "minimist": "^1.2.8",
+    "composerize": "^1.7.2"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

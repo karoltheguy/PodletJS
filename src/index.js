@@ -5,20 +5,20 @@
 
 import { Container } from './container.js';
 import { QuadletGenerator } from './quadlet-generator.js';
-import { DockerRunParser } from './docker-run-parser.js';
 import { ComposeParser } from './compose-parser.js';
 import { 
   Unit, Service, Install, Globals, 
   Volume, PortMapping, Environment, Label,
   ContainerUtils, NotifyOptions, PullPolicy, AutoUpdate, RestartPolicy
 } from './types.js';
+const composerize = require('composerize');
 
 /**
  * Main PodletJS class - entry point for all transformations
  */
 export class PodletJS {
   constructor() {
-    this.dockerRunParser = new DockerRunParser();
+    //this.composerize = new Composerize();
     this.composeParser = new ComposeParser();
   }
 
@@ -111,7 +111,7 @@ export class PodletJS {
    * @returns {Container} Parsed container configuration
    */
   parseDockerRun(command) {
-    return this.dockerRunParser.parse(command);
+    return composerize(command);
   }
 
   /**
@@ -137,7 +137,6 @@ export function createPodlet() {
 export {
   Container,
   QuadletGenerator,
-  DockerRunParser,
   ComposeParser,
   Unit,
   Service, 
