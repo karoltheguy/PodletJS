@@ -42,6 +42,15 @@ export class ComposeParser {
   }
 
   /**
+   * Parse a compose file from filesystem
+   */
+  async parseFile(filePath) {
+    const fs = await import('fs-extra');
+    const yamlContent = await fs.default.readFile(filePath, 'utf8');
+    return this.parse(yamlContent);
+  }
+
+  /**
    * Parse a single service into a Container object
    */
   _parseService(serviceName, service, compose) {

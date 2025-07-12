@@ -1,0 +1,13 @@
+{
+  "name": "podlet-js",
+  "version": "1.0.0",
+  "scripts": {
+    "test:e2e": "jest"
+  },
+  "devDependencies": {
+    "jest": "^27.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

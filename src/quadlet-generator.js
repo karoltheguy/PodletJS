@@ -383,8 +383,8 @@ export class QuadletGenerator {
   static generateUnitSection(unit) {
     let output = '[Unit]\n';
     
-    if (unit.description) {
-      output += `Description=${unit.description}\n`;
+    if (unit.description || unit.Description) {
+      output += `Description=${unit.description || unit.Description}\n`;
     }
     
     if (unit.wants && unit.wants.length > 0) {
@@ -412,12 +412,16 @@ export class QuadletGenerator {
   static generateServiceSection(service) {
     let output = '[Service]\n';
     
-    if (service.restart) {
-      output += `Restart=${service.restart}\n`;
+    if (service.restart || service.Restart) {
+      output += `Restart=${service.restart || service.Restart}\n`;
     }
     
-    if (service.restartSec) {
-      output += `RestartSec=${service.restartSec}\n`;
+    if (service.restartSec || service.RestartSec) {
+      output += `RestartSec=${service.restartSec || service.RestartSec}\n`;
+    }
+    
+    if (service.timeoutStartSec || service.TimeoutStartSec) {
+      output += `TimeoutStartSec=${service.timeoutStartSec || service.TimeoutStartSec}\n`;
     }
     
     return output;

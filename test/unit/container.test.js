@@ -64,13 +64,13 @@ describe('Container', () => {
 
   it('should validate missing image', () => {
     const c = new Container();
-    expect(c.validate()).toContain('Image is required');
+    expect(() => c.validate()).toThrow('Image is required');
   });
 
   it('should validate with image set', () => {
     const c = new Container();
     c.setImage('nginx:latest');
-    expect(c.validate()).toEqual([]);
+    expect(() => c.validate()).not.toThrow();
   });
 
   it('should handle complex image names in getDefaultName', () => {

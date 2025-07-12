@@ -21,6 +21,17 @@ Complete Docker Compose YAML parsing with multi-service support and systemd inte
 - **Main interface**: PodletJS class with complete API
 - **Validation**: Container validation and error handling
 
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/karoltheguy/podlet-js.git
+cd podlet-js
+
+# Install dependencies
+npm install
+```
+
 ### Usage
 
 ```javascript
@@ -64,6 +75,16 @@ const composeQuadlets = podlet.composeToQuadlet(composeYaml, {
 
 console.log('Web service:', composeQuadlets.web);
 console.log('DB service:', composeQuadlets.db);
+
+// Parse Docker run commands
+const dockerRunCommand = `docker run -d --name web-server -p 8080:80 -e NODE_ENV=production -v data:/app/data nginx:alpine`;
+const runQuadlet = podlet.runToQuadlet(dockerRunCommand, {
+  unit: { description: 'Web Server Container' },
+  service: { restart: 'always' },
+  install: { wantedBy: ['multi-user.target'] }
+});
+
+console.log('Docker run Quadlet:', runQuadlet);
 ```
 
 Outputs:
@@ -140,17 +161,23 @@ WantedBy=multi-user.target
 ### Testing
 
 ```bash
-cd podlet-js
+# Install dependencies
 npm install
 
-# Run main test suite
-npm test
+# Run all tests (unit + e2e)
+npm run test:all
 
-# Run comprehensive docker run parser tests  
-node test/docker-run-test.js
+# Run only unit tests
+npm run test:unit
 
-# Run comprehensive compose parser tests
-node test/compose-test.js
+# Run only end-to-end tests
+npm run test:e2e
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ### Possible Future Enhancements
@@ -174,20 +201,36 @@ src/
 ├── index.js             # Main PodletJS class
 ├── container.js         # Container configuration class  
 ├── quadlet-generator.js # Quadlet file generation
-├── docker-run-parser.js # Docker run command parser
 ├── compose-parser.js    # Docker compose file parser
 └── types.js            # Core data structures and enums
 
 test/
-├── test.js             # Main test suite
-├── docker-run-test.js  # Docker run parser tests
-└── compose-test.js     # Compose parser tests
+├── setup.js            # Test setup configuration
+├── unit/               # Unit tests
+│   ├── compose-parser.test.js
+│   ├── container.test.js
+│   ├── index.test.js
+│   └── quadlet-generator.test.js
+└── e2e/                # End-to-end tests
+    ├── container.e2e.test.js
+    ├── podlet-js.e2e.test.js
+    └── quadlet-generator.e2e.test.js
 ```
 
 ## Dependencies
 
-- `js-yaml`: YAML parsing for compose files
+### Runtime Dependencies
+- `js-yaml`: YAML parsing for Docker Compose files
 - `minimist`: Command line argument parsing
+- `composerize`: Convert Docker run commands to docker-compose format
+
+### Development Dependencies
+- `jest`: Testing framework
+- `@jest/globals`: Jest testing utilities
+- `babel-jest`: Babel integration for Jest
+- `@babel/core` & `@babel/preset-env`: ES6+ transpilation
+- `fs-extra`: Enhanced file system operations for testing
+- `tmp`: Temporary file and directory creation for tests
 
 ## License
 

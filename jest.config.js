@@ -5,9 +5,7 @@ export default {
     '<rootDir>/test/unit/**/*.test.js',
     '<rootDir>/test/e2e/**/*.test.js'
   ],
-  transform: {
-    '^.+\\.js$': 'babel-jest'
-  },
+  transform: {},
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
   testTimeout: 30000,

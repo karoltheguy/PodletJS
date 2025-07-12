@@ -5,8 +5,12 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
-    "test:all": "npm test && npm run test:docker && npm run test:compose",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:unit": "NODE_OPTIONS='--experimental-vm-modules' jest test/unit",
+    "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest test/e2e",
+    "test:all": "npm run test:unit && npm run test:e2e",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
     "start": "node src/index.js"
   },
   "keywords": [
@@ -19,15 +23,18 @@
   "author": "KarolTheGuy",
   "license": "MPL-2.0",
   "dependencies": {
+    "composerize": "^1.7.2",
     "js-yaml": "^4.1.0",
-    "minimist": "^1.2.8",
-    "composerize": "^1.7.2"
+    "minimist": "^1.2.8"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
+    "@jest/globals": "^30.0.4",
     "babel-jest": "^30.0.4",
-    "jest": "^30.0.4"
+    "fs-extra": "^11.3.0",
+    "jest": "^30.0.4",
+    "tmp": "^0.2.3"
   },
   "repository": {
     "type": "git",

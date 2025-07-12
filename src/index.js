@@ -11,6 +11,10 @@ import {
   Volume, PortMapping, Environment, Label,
   ContainerUtils, NotifyOptions, PullPolicy, AutoUpdate, RestartPolicy
 } from './types.js';
+import { createRequire } from 'module';
+import yaml from 'yaml';
+
+const require = createRequire(import.meta.url);
 const composerize = require('composerize');
 
 /**
@@ -18,8 +22,9 @@ const composerize = require('composerize');
  */
 export class PodletJS {
   constructor() {
-    //this.composerize = new Composerize();
     this.composeParser = new ComposeParser();
+    this.quadletGenerator = new QuadletGenerator();
+    this.containerUtils = ContainerUtils;
   }
 
   /**
@@ -30,7 +35,11 @@ export class PodletJS {
    * @returns {string} Generated Quadlet file content
    */
   dockerRunToQuadlet(command, options = {}) {
-    const container = this.parseDockerRun(command);
+    const composeObject = this.parseDockerRun(command);
+    // Get the first service from the compose object and convert to Container
+    const serviceName = Object.keys(composeObject.services)[0];
+    const serviceConfig = composeObject.services[serviceName];
+    const container = this.composeParser._parseService(serviceName, serviceConfig, composeObject);
     return this.containerToQuadlet(container, options);
   }
 
@@ -39,13 +48,13 @@ export class PodletJS {
    * 
    * @param {string} yamlContent - Compose file YAML content
    * @param {Object} options - Additional options for generation
-   * @returns {Object} Map of service names to Quadlet file content
+   * @returns {Array} Array of objects with filename and content
    */
   composeToQuadlet(yamlContent, options = {}) {
-    const services = this.parseCompose(yamlContent);
-    const results = {};
+    const servicesObject = this.composeParser.parse(yamlContent);
+    const results = [];
     
-    for (const [serviceName, container] of Object.entries(services)) {
+    for (const [serviceName, container] of Object.entries(servicesObject)) {
       // Handle dependencies through systemd Unit configuration
       let unitConfig = options.unit || {};
       
@@ -61,22 +70,27 @@ export class PodletJS {
       let serviceConfig = options.service || {};
       if (container._restart) {
         const restartMap = {
-          'no': undefined,
+          'no': 'no',
           'always': 'always',
           'on-failure': 'on-failure',
           'unless-stopped': 'always'
         };
         const restart = restartMap[container._restart];
-        if (restart) {
-          serviceConfig = { ...serviceConfig, restart };
+        if (restart !== undefined) {
+          serviceConfig = { ...serviceConfig, Restart: restart };
         }
       }
 
-      results[serviceName] = this.containerToQuadlet(container, {
+      const content = this.containerToQuadlet(container, {
         ...options,
         name: serviceName,
         unit: Object.keys(unitConfig).length > 0 ? unitConfig : options.unit,
         service: Object.keys(serviceConfig).length > 0 ? serviceConfig : options.service
+      });
+
+      results.push({
+        filename: `${serviceName}.container`,
+        content: content
       });
     }
     
@@ -91,14 +105,8 @@ export class PodletJS {
    * @returns {string} Generated Quadlet file content
    */
   containerToQuadlet(container, options = {}) {
-    // Validate container
-    const errors = ContainerUtils.validateContainer(container);
-    if (errors.length > 0) {
-      throw new Error(`Container validation failed: ${errors.join(', ')}`);
-    }
-
-    // Normalize container
-    ContainerUtils.normalizeContainer(container);
+    // Validate container using container's own validate method
+    container.validate();
 
     // Generate Quadlet file
     return QuadletGenerator.generateFile(container, options);
@@ -111,7 +119,14 @@ export class PodletJS {
    * @returns {Container} Parsed container configuration
    */
   parseDockerRun(command) {
-    return composerize(command);
+    // Convert array to string if needed
+    if (Array.isArray(command)) {
+      command = command.join(' ');
+    }
+    
+    const composeYaml = composerize(command);
+    // Parse the YAML to return the compose object structure
+    return yaml.parse(composeYaml);
   }
 
   /**
@@ -121,7 +136,32 @@ export class PodletJS {
    * @returns {Object} Map of service names to Container objects
    */
   parseCompose(yamlContent) {
-    return this.composeParser.parse(yamlContent);
+    const services = this.composeParser.parse(yamlContent);
+    return Object.values(services);
+  }
+
+  /**
+   * Parse a docker run command and generate a Quadlet file (alias for dockerRunToQuadlet)
+   * 
+   * @param {string|Array} command - Docker run command as string or array of arguments
+   * @param {Object} options - Additional options for generation
+   * @returns {string} Generated Quadlet file content
+   */
+  fromDockerRun(command, options = {}) {
+    return this.dockerRunToQuadlet(command, options);
+  }
+
+  /**
+   * Parse a compose file and generate Quadlet files (alias for composeToQuadlet)
+   * 
+   * @param {string} filePath - Path to compose file
+   * @param {Object} options - Additional options for generation
+   * @returns {Object} Map of service names to Quadlet file content
+   */
+  async fromCompose(filePath, options = {}) {
+    const fs = await import('fs-extra');
+    const yamlContent = await fs.readFile(filePath, 'utf8');
+    return this.composeToQuadlet(yamlContent, options);
   }
 
 }

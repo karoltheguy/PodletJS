@@ -1,288 +1,262 @@
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import PodletJS, { createPodlet } from '../../src/index.js';
 import { Container } from '../../src/container.js';
 import { QuadletGenerator } from '../../src/quadlet-generator.js';
 import { ComposeParser } from '../../src/compose-parser.js';
-import { ContainerUtils } from '../../src/types.js';
-const composerize = require('composerize');
 
-// Mock external dependencies
-jest.mock('../../src/quadlet-generator.js');
-jest.mock('../../src/compose-parser.js');
-jest.mock('../../src/types.js');
-jest.mock('composerize');
+// Note: These tests use integration-style testing rather than mocking
+// due to ES module compatibility considerations
 
 describe('PodletJS', () => {
   let podlet;
-  let mockComposeParser;
 
   beforeEach(() => {
-    // Reset all mocks
-    jest.clearAllMocks();
-    
-    // Setup mock instances
-    mockComposeParser = {
-      parse: jest.fn()
-    };
-    
-    // Mock constructors
-    ComposeParser.mockImplementation(() => mockComposeParser);
-    QuadletGenerator.generateFile = jest.fn();
-    
-    // Mock static methods
-    ContainerUtils.validateContainer = jest.fn().mockReturnValue([]);
-    ContainerUtils.normalizeContainer = jest.fn();
-    
-    // Mock composerize function
-    composerize.mockImplementation(() => new Container());
-    
     podlet = new PodletJS();
   });
 
   describe('constructor', () => {
     it('should create new instances of dependencies', () => {
-      expect(ComposeParser).toHaveBeenCalled();
-      expect(podlet.composeParser).toBeDefined();
+      expect(podlet.composeParser).toBeInstanceOf(ComposeParser);
+      expect(podlet.quadletGenerator).toBeInstanceOf(QuadletGenerator);
+      expect(podlet.containerUtils).toBeDefined();
     });
   });
 
   describe('dockerRunToQuadlet', () => {
     it('should parse docker run command and generate quadlet file', () => {
-      const command = 'docker run -d --name test nginx:latest';
-      const mockContainer = new Container();
-      const expectedQuadlet = '[Container]\nImage=nginx:latest\n';
+      const dockerCommand = 'docker run -d --name test-app -p 8080:80 nginx:alpine';
       
-      composerize.mockReturnValue(mockContainer);
-      QuadletGenerator.generateFile.mockReturnValue(expectedQuadlet);
+      const result = podlet.dockerRunToQuadlet(dockerCommand);
       
-      const result = podlet.dockerRunToQuadlet(command);
-      
-      expect(composerize).toHaveBeenCalledWith(command);
-      expect(QuadletGenerator.generateFile).toHaveBeenCalledWith(mockContainer, {});
-      expect(result).toBe(expectedQuadlet);
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result).toContain('[Container]');
+      expect(result).toContain('Image=nginx:alpine');
+      expect(result).toContain('ContainerName=test-app');
+      expect(result).toContain('PublishPort=8080:80');
     });
 
     it('should pass options to quadlet generator', () => {
-      const command = 'docker run nginx:latest';
-      const options = { name: 'custom-name' };
-      const mockContainer = new Container();
+      const dockerCommand = 'docker run -d --name test-app nginx:alpine';
+      const options = {
+        unit: { Description: 'Test app' },
+        service: { Restart: 'always' }
+      };
       
-      composerize.mockReturnValue(mockContainer);
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
+      const result = podlet.dockerRunToQuadlet(dockerCommand, options);
       
-      podlet.dockerRunToQuadlet(command, options);
-      
-      expect(composerize).toHaveBeenCalledWith(command);
-      expect(QuadletGenerator.generateFile).toHaveBeenCalledWith(mockContainer, options);
+      expect(result).toContain('[Unit]');
+      expect(result).toContain('Description=Test app');
+      expect(result).toContain('[Service]');
+      expect(result).toContain('Restart=always');
     });
 
     it('should handle array command format', () => {
-      const command = ['docker', 'run', '-d', 'nginx:latest'];
-      const mockContainer = new Container();
+      const dockerCommand = ['docker', 'run', '-d', '--name', 'test-app', 'nginx:alpine'];
       
-      composerize.mockReturnValue(mockContainer);
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
+      const result = podlet.dockerRunToQuadlet(dockerCommand);
       
-      podlet.dockerRunToQuadlet(command);
-      
-      expect(composerize).toHaveBeenCalledWith(command);
+      expect(result).toBeDefined();
+      expect(result).toContain('Image=nginx:alpine');
+      expect(result).toContain('ContainerName=test-app');
     });
   });
 
   describe('composeToQuadlet', () => {
     it('should parse compose file and generate quadlet files for each service', () => {
-      const yamlContent = `
-        version: '3'
-        services:
-          web:
-            image: nginx:latest
-          db:
-            image: postgres:13
-      `;
+      const composeYaml = `
+version: '3'
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: secret
+`;
       
-      const mockServices = {
-        web: new Container(),
-        db: new Container()
-      };
+      const results = podlet.composeToQuadlet(composeYaml);
       
-      mockComposeParser.parse.mockReturnValue(mockServices);
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+      expect(results).toHaveLength(2);
       
-      const result = podlet.composeToQuadlet(yamlContent);
+      const webResult = results.find(r => r.filename.includes('web'));
+      const dbResult = results.find(r => r.filename.includes('db'));
       
-      expect(mockComposeParser.parse).toHaveBeenCalledWith(yamlContent);
-      expect(QuadletGenerator.generateFile).toHaveBeenCalledTimes(2);
-      expect(result).toEqual({
-        web: 'quadlet content',
-        db: 'quadlet content'
-      });
+      expect(webResult).toBeDefined();
+      expect(webResult.content).toContain('Image=nginx:alpine');
+      expect(webResult.content).toContain('PublishPort=80:80');
+      
+      expect(dbResult).toBeDefined();
+      expect(dbResult.content).toContain('Image=postgres:13');
+      expect(dbResult.content).toContain('Environment=POSTGRES_PASSWORD=secret');
     });
 
     it('should handle service dependencies by adding unit configuration', () => {
-      const yamlContent = 'compose content';
-      const webContainer = new Container();
-      webContainer._dependsOn = ['db'];
+      const composeYaml = `
+version: '3'
+services:
+  app:
+    image: nginx:alpine
+    depends_on:
+      - db
+  db:
+    image: postgres:13
+`;
       
-      const mockServices = {
-        web: webContainer,
-        db: new Container()
-      };
+      const results = podlet.composeToQuadlet(composeYaml);
       
-      mockComposeParser.parse.mockReturnValue(mockServices);
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
-      
-      const result = podlet.composeToQuadlet(yamlContent);
-      
-      // Check that web service was called with dependency configuration
-      const webCall = QuadletGenerator.generateFile.mock.calls.find(
-        call => call[1].name === 'web'
-      );
-      
-      expect(webCall[1].unit).toEqual({
-        after: ['db.service'],
-        wants: ['db.service']
-      });
+      const appResult = results.find(r => r.filename.includes('app'));
+      expect(appResult.content).toContain('[Unit]');
+      expect(appResult.content).toContain('After=db.service');
+      expect(appResult.content).toContain('Wants=db.service');
     });
 
     it('should handle restart policies by adding service configuration', () => {
-      const yamlContent = 'compose content';
-      const webContainer = new Container();
-      webContainer._restart = 'always';
+      const composeYaml = `
+version: '3'
+services:
+  app:
+    image: nginx:alpine
+    restart: always
+`;
       
-      const mockServices = {
-        web: webContainer
-      };
+      const results = podlet.composeToQuadlet(composeYaml);
       
-      mockComposeParser.parse.mockReturnValue(mockServices);
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
-      
-      podlet.composeToQuadlet(yamlContent);
-      
-      const webCall = QuadletGenerator.generateFile.mock.calls[0];
-      expect(webCall[1].service).toEqual({ restart: 'always' });
+      const appResult = results[0];
+      expect(appResult.content).toContain('[Service]');
+      expect(appResult.content).toContain('Restart=always');
     });
 
     it('should map different restart policy values correctly', () => {
       const testCases = [
-        { input: 'no', expected: undefined },
-        { input: 'always', expected: 'always' },
-        { input: 'on-failure', expected: 'on-failure' },
-        { input: 'unless-stopped', expected: 'always' }
+        { compose: 'no', expected: 'no' },
+        { compose: 'always', expected: 'always' },
+        { compose: 'on-failure', expected: 'on-failure' },
+        { compose: 'unless-stopped', expected: 'always' }
       ];
 
-      testCases.forEach(({ input, expected }) => {
-        const container = new Container();
-        container._restart = input;
+      testCases.forEach(({ compose, expected }) => {
+        const composeYaml = `
+version: '3'
+services:
+  app:
+    image: nginx:alpine
+    restart: ${compose}
+`;
         
-        const mockServices = { test: container };
-        mockComposeParser.parse.mockReturnValue(mockServices);
-        QuadletGenerator.generateFile.mockClear();
-        
-        podlet.composeToQuadlet('yaml content');
-        
-        const call = QuadletGenerator.generateFile.mock.calls[0];
-        if (expected) {
-          expect(call[1].service).toEqual({ restart: expected });
-        } else {
-          expect(call[1].service).toBeUndefined();
-        }
+        const results = podlet.composeToQuadlet(composeYaml);
+        const appResult = results[0];
+        expect(appResult.content).toContain(`Restart=${expected}`);
       });
     });
 
     it('should preserve existing unit and service options', () => {
-      const yamlContent = 'compose content';
+      const composeYaml = `
+version: '3'
+services:
+  app:
+    image: nginx:alpine
+    restart: always
+    depends_on:
+      - db
+  db:
+    image: postgres:13
+`;
+      
       const options = {
-        unit: { description: 'Custom description' },
-        service: { type: 'oneshot' }
+        unit: { Description: 'Custom app' },
+        service: { TimeoutStartSec: '60' }
       };
       
-      const container = new Container();
-      container._dependsOn = ['db'];
-      container._restart = 'always';
+      const results = podlet.composeToQuadlet(composeYaml, options);
       
-      const mockServices = { web: container };
-      mockComposeParser.parse.mockReturnValue(mockServices);
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
-      
-      podlet.composeToQuadlet(yamlContent, options);
-      
-      const call = QuadletGenerator.generateFile.mock.calls[0];
-      expect(call[1].unit).toEqual({
-        description: 'Custom description',
-        after: ['db.service'],
-        wants: ['db.service']
-      });
-      expect(call[1].service).toEqual({
-        type: 'oneshot',
-        restart: 'always'
-      });
+      const appResult = results.find(r => r.filename.includes('app'));
+      expect(appResult.content).toContain('Description=Custom app');
+      expect(appResult.content).toContain('TimeoutStartSec=60');
+      expect(appResult.content).toContain('Restart=always');
+      expect(appResult.content).toContain('After=db.service');
     });
   });
 
   describe('containerToQuadlet', () => {
-    let mockContainer;
-
-    beforeEach(() => {
-      mockContainer = new Container();
-    });
-
     it('should validate, normalize and generate quadlet for container', () => {
-      const expectedQuadlet = '[Container]\nImage=nginx:latest\n';
-      QuadletGenerator.generateFile.mockReturnValue(expectedQuadlet);
+      const container = new Container();
+      container.setImage('nginx:alpine');
+      container.setContainerName('test-app');
+      container.addPublishPort('80:80');
       
-      const result = podlet.containerToQuadlet(mockContainer);
+      const result = podlet.containerToQuadlet(container);
       
-      expect(ContainerUtils.validateContainer).toHaveBeenCalledWith(mockContainer);
-      expect(ContainerUtils.normalizeContainer).toHaveBeenCalledWith(mockContainer);
-      expect(QuadletGenerator.generateFile).toHaveBeenCalledWith(mockContainer, {});
-      expect(result).toBe(expectedQuadlet);
+      expect(result).toBeDefined();
+      expect(result).toContain('[Container]');
+      expect(result).toContain('Image=nginx:alpine');
+      expect(result).toContain('ContainerName=test-app');
+      expect(result).toContain('PublishPort=80:80');
     });
 
     it('should throw error if container validation fails', () => {
-      const validationErrors = ['Image is required', 'Invalid port format'];
-      ContainerUtils.validateContainer.mockReturnValue(validationErrors);
+      const container = new Container();
+      // Container without image should fail validation
       
       expect(() => {
-        podlet.containerToQuadlet(mockContainer);
-      }).toThrow('Container validation failed: Image is required, Invalid port format');
-      
-      expect(QuadletGenerator.generateFile).not.toHaveBeenCalled();
+        podlet.containerToQuadlet(container);
+      }).toThrow('Image is required');
     });
 
     it('should pass options to quadlet generator', () => {
-      const options = { name: 'test-container' };
-      QuadletGenerator.generateFile.mockReturnValue('quadlet content');
+      const container = new Container();
+      container.setImage('nginx:alpine');
       
-      podlet.containerToQuadlet(mockContainer, options);
+      const options = {
+        unit: { Description: 'Test container' },
+        service: { Restart: 'always' }
+      };
       
-      expect(QuadletGenerator.generateFile).toHaveBeenCalledWith(mockContainer, options);
+      const result = podlet.containerToQuadlet(container, options);
+      
+      expect(result).toContain('[Unit]');
+      expect(result).toContain('Description=Test container');
+      expect(result).toContain('[Service]');
+      expect(result).toContain('Restart=always');
     });
   });
 
   describe('parseDockerRun', () => {
     it('should delegate to composerize', () => {
-      const command = 'docker run nginx:latest';
-      const expectedContainer = new Container();
+      const dockerCommand = 'docker run -d --name test nginx:alpine';
       
-      composerize.mockReturnValue(expectedContainer);
+      const result = podlet.parseDockerRun(dockerCommand);
       
-      const result = podlet.parseDockerRun(command);
-      
-      expect(composerize).toHaveBeenCalledWith(command);
-      expect(result).toBe(expectedContainer);
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('object');
+      expect(result.services).toBeDefined();
+      expect(result.services.nginx).toBeDefined();
+      expect(result.services.nginx.image).toBe('nginx:alpine');
     });
   });
 
   describe('parseCompose', () => {
     it('should delegate to compose parser', () => {
-      const yamlContent = 'version: "3"\nservices:\n  web:\n    image: nginx';
-      const expectedServices = { web: new Container() };
+      const composeYaml = `
+version: '3'
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+`;
       
-      mockComposeParser.parse.mockReturnValue(expectedServices);
+      const result = podlet.parseCompose(composeYaml);
       
-      const result = podlet.parseCompose(yamlContent);
-      
-      expect(mockComposeParser.parse).toHaveBeenCalledWith(yamlContent);
-      expect(result).toBe(expectedServices);
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(1);
+      expect(result[0].image).toBe('nginx:alpine');
+      expect(result[0].publishPort).toContain('80:80');
     });
   });
 });
@@ -290,19 +264,19 @@ describe('PodletJS', () => {
 describe('createPodlet', () => {
   it('should return a new PodletJS instance', () => {
     const podlet = createPodlet();
-    
     expect(podlet).toBeInstanceOf(PodletJS);
-    expect(podlet.composeParser).toBeDefined();
   });
 
   it('should create independent instances', () => {
     const podlet1 = createPodlet();
     const podlet2 = createPodlet();
     
-    expect(podlet1).not.toBe(podlet2);
     expect(podlet1).toBeInstanceOf(PodletJS);
     expect(podlet2).toBeInstanceOf(PodletJS);
-
-    expect(ComposeParser).toHaveBeenCalledTimes(4); // 2 in beforeEach, 2 here
+    
+    // They should be different instances
+    expect(podlet1).not.toBe(podlet2);
+    expect(podlet1.composeParser).not.toBe(podlet2.composeParser);
+    expect(podlet1.quadletGenerator).not.toBe(podlet2.quadletGenerator);
   });
 });
