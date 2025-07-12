@@ -22,6 +22,9 @@
   ],
   "author": "KarolTheGuy",
   "license": "MPL-2.0",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "composerize": "^1.7.2",
     "js-yaml": "^4.1.0",
@@ -38,6 +41,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/containers/podlet"
-  }
+    "url": "https://github.com/karoltheguy/podletjs"
+  },
+  "bugs": {
+    "url": "https://github.com/karoltheguy/podletjs/issues"
+  },
+  "homepage": "https://github.com/karoltheguy/podletjs#readme"
 }
