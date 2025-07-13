@@ -13,10 +13,18 @@ on:
       - 'src/**/*.js'
       - 'package.json'
       - 'package-lock.json'
+  workflow_dispatch:  # Enables manual triggering
+
+permissions:
+  contents: read  # Default read-only access to repository contents
 
 jobs:
   test-and-deploy:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read  # Read access to checkout the source repository
+      # Note: Write access to destination repo is handled via PAT_TOKEN
     
     steps:
     - name: Checkout source repo (PodletJS)
@@ -45,7 +53,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: karoltheguy/karoltheguy.github.io
-        token: ${{ secrets.PAT_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         path: destination
         
     - name: Copy JS files from src to destination js folder
