@@ -31,6 +31,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         path: source
+    
+    - name: Debug path existence
+      run: |
+        ls -l source/
+        ls -l source/package-lock.json
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
