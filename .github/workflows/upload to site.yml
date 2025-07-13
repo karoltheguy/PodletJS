@@ -1,0 +1,36 @@
+name: Copy on Jest Success
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test-and-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: your-source-repo
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+      - name: Copy if tests pass
+        if: success() # Only runs if tests pass
+        run: |
+          # Copy files to a temp directory
+          cp path/to/files /tmp/copy-files
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: karoltheguy/karoltheguy.github.io
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: target-repo
+      - name: Move files into target repo
+        run: cp /src/*.js target-repo/
+      - name: Commit and push changes
+        run: |
+          cd target-repo
+          git add .
+          git commit -m "Copy files after 100% test pass"
+          git push
