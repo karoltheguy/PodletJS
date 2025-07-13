@@ -1,36 +1,70 @@
-name: Copy on Jest Success
+name: Test and Deploy JS Files
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+    paths:
+      - 'src/**/*.js'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**/*.js'
+      - 'package.json'
+      - 'package-lock.json'
 
 jobs:
-  test-and-copy:
+  test-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: karoltheguy/podletjs
-      - name: Install dependencies
-        run: npm install
-      - name: Run tests
-        run: npm test
-      - name: Copy if tests pass
-        if: success() # Only runs if tests pass
-        run: |
-          # Copy files to a temp directory
-          cp path/to/files /tmp/copy-files
-      - name: Checkout target repo
-        uses: actions/checkout@v4
-        with:
-          repository: karoltheguy/karoltheguy.github.io
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: target-repo
-      - name: Move files into target repo
-        run: cp /src/*.js target-repo/
-      - name: Commit and push changes
-        run: |
-          cd target-repo
-          git add .
-          git commit -m "Copy files after 100% test pass"
+    - name: Checkout source repo (PodletJS)
+      uses: actions/checkout@v4
+      with:
+        path: source
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: source/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd source
+        npm ci
+      
+    - name: Run tests
+      run: |
+        cd source
+        npm test
+      
+    - name: Checkout destination repo
+      uses: actions/checkout@v4
+      with:
+        repository: karoltheguy/karoltheguy.github.io
+        token: ${{ secrets.PAT_TOKEN }}
+        path: destination
+        
+    - name: Copy JS files from src to destination js folder
+      run: |
+        # Create js directory if it doesn't exist
+        mkdir -p destination/js
+        
+        # Copy all JS files from source/src folder to destination js folder
+        cp source/src/*.js destination/js/
+        
+    - name: Commit and push to destination repo
+      run: |
+        cd destination
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add js/
+        if ! git diff --staged --quiet; then
+          git commit -m "Update JS files from PodletJS repo"
           git push
+        else
+          echo "No changes to commit"
+        fi
