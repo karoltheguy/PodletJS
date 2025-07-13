@@ -37,7 +37,7 @@ jobs:
       with:
         node-version-file: 'source/package.json'
         cache: 'npm'
-        cache-dependency-path: source/package-lock.json
+        cache-dependency-path: 'source/package-lock.json'
         
     - name: Install dependencies
       run: |
@@ -53,7 +53,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: karoltheguy/karoltheguy.github.io
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT_TOKEN }}
         path: destination
         
     - name: Copy JS files from src to destination js folder
