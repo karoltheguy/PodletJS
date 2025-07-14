@@ -1,6 +1,6 @@
 {
-  "name": "podlet-js",
-  "version": "0.1.0",
+  "name": "podletjs",
+  "version": "1.0.0",
   "description": "JavaScript port of Podlet - Generate Podman Quadlet files from Docker run commands and compose files",
   "main": "src/index.js",
   "type": "module",
