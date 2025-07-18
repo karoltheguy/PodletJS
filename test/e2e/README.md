@@ -8,12 +8,22 @@ The E2E tests are organized into several test files:
 
 ### `podlet-js.e2e.test.js`
 Tests the main PodletJS class functionality:
-- Docker run command parsing
 - Docker Compose file parsing
 - File generation and writing
 - Advanced Quadlet options
 - Error handling
 - Real-world scenarios (WordPress + MySQL, Monitoring stack)
+
+### `docker-run.e2e.test.js`
+Tests comprehensive Docker run command parsing and conversion:
+- Basic Docker run commands (simple image, ports, volumes, environment)
+- Advanced Docker run options (network, security, health checks, labels)
+- Real-world scenarios (database, cache, monitoring, web proxy)
+- Systemd/Quadlet integration (Unit, Service, Install sections)
+- File generation and writing
+- Command parsing methods and error handling
+- Array vs string command formats
+- Special character and escaping handling
 
 ### `quadlet-generator.e2e.test.js`
 Tests complete Quadlet file generation:
@@ -162,6 +172,8 @@ All temporary files are cleaned up automatically after each test using the `tmp`
 The E2E tests verify proper error handling for:
 
 - Invalid Docker run commands
+- Malformed Docker run commands and flags
+- Empty or null Docker run commands
 - Malformed Docker Compose files
 - Non-existent files
 - Invalid container configurations

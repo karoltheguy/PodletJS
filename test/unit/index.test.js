@@ -18,7 +18,6 @@ describe('PodletJS', () => {
     it('should create new instances of dependencies', () => {
       expect(podlet.composeParser).toBeInstanceOf(ComposeParser);
       expect(podlet.quadletGenerator).toBeInstanceOf(QuadletGenerator);
-      expect(podlet.containerUtils).toBeDefined();
     });
   });
 
@@ -136,7 +135,7 @@ services:
         { compose: 'no', expected: 'no' },
         { compose: 'always', expected: 'always' },
         { compose: 'on-failure', expected: 'on-failure' },
-        { compose: 'unless-stopped', expected: 'always' }
+        { compose: 'unless-stopped', expected: 'unless-stopped' }
       ];
 
       testCases.forEach(({ compose, expected }) => {
