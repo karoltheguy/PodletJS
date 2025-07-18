@@ -150,4 +150,77 @@ describe('Container', () => {
     expect(c.exec).toBeNull();
     expect(c.notify).toBe('conmon');
   });
+
+  it('should throw validation error for invalid port', () => {
+    const c = new Container();
+    c.setImage('nginx');
+    c.publishPort.push('8080:80000'); // Invalid port
+    expect(() => c.validate()).toThrow('Invalid port: 8080:80000');
+  });
+
+  it('should throw validation error for non-numeric port', () => {
+    const c = new Container();
+    c.setImage('nginx');
+    c.publishPort.push('8080:abc');
+    expect(() => c.validate()).toThrow('Invalid port: 8080:abc');
+  });
+
+  it('should not throw for valid port', () => {
+    const c = new Container();
+    c.setImage('nginx');
+    c.addPublishPort('8080:80');
+    expect(() => c.validate()).not.toThrow();
+  });
+
+  it('should handle ports with protocols in validation', () => {
+    const c = new Container();
+    c.setImage('nginx');
+    c.publishPort.push('8080:80/tcp');
+    expect(() => c.validate()).not.toThrow();
+  });
+
+  it('should create a deep clone of the container', () => {
+    const c = new Container();
+    c.setImage('nginx:latest')
+     .setContainerName('original')
+     .addPublishPort('8080:80')
+     .addEnvironment('NODE_ENV=production')
+     .addVolume('/data')
+     .addLabel('app=web');
+
+    const cloned = c.clone();
+
+    expect(cloned).not.toBe(c);
+    expect(cloned.image).toBe('nginx:latest');
+    expect(cloned.containerName).toBe('original');
+    expect(cloned.publishPort).toEqual(['8080:80']);
+    expect(cloned.environment).toEqual(['NODE_ENV=production']);
+    expect(cloned.volume).toEqual(['/data']);
+    expect(cloned.label).toEqual(['app=web']);
+  });
+
+  it('should not modify the clone when the original is changed', () => {
+    const c = new Container();
+    c.addPublishPort('8080:80');
+    c.addEnvironment('VAR=initial');
+
+    const cloned = c.clone();
+
+    c.addPublishPort('9090:90');
+    c.environment[0] = 'VAR=changed';
+
+    expect(cloned.publishPort).toEqual(['8080:80']);
+    expect(cloned.environment).toEqual(['VAR=initial']);
+  });
+
+  it('should create a clone of an empty container', () => {
+    const c = new Container();
+    const cloned = c.clone();
+
+    expect(cloned).not.toBe(c);
+    expect(cloned.image).toBe('');
+    expect(cloned.containerName).toBeNull();
+    expect(cloned.publishPort).toEqual([]);
+    expect(cloned.environment).toEqual([]);
+  });
 });

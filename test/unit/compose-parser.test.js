@@ -1,5 +1,8 @@
 import { ComposeParser } from '../../src/compose-parser.js';
 import { Container } from '../../src/container.js';
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
 
 const minimalCompose = `
 version: '3'
@@ -698,5 +701,37 @@ services:
 `;
     const containers = parser.parse(yaml);
     expect(containers.web.noNewPrivileges).toBe(true);
+  });
+
+  describe('parseFile', () => {
+    let tmpDir;
+    beforeEach(async () => {
+      tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'podletjs-test-'));
+    });
+
+    afterEach(async () => {
+      await fs.remove(tmpDir);
+    });
+
+    it('should parse a compose file from the filesystem', async () => {
+      const composePath = path.join(tmpDir, 'docker-compose.yml');
+      await fs.writeFile(composePath, minimalCompose);
+
+      const containers = await parser.parseFile(composePath);
+      expect(containers).toHaveProperty('web');
+      const web = containers.web;
+      expect(web.image).toBe('nginx:latest');
+    });
+
+    it('should throw an error if the file does not exist', async () => {
+      const nonExistentPath = path.join(tmpDir, 'non-existent-file.yml');
+      await expect(parser.parseFile(nonExistentPath)).rejects.toThrow();
+    });
+
+    it('should throw an error for an empty file', async () => {
+      const emptyPath = path.join(tmpDir, 'empty.yml');
+      await fs.writeFile(emptyPath, '');
+      await expect(parser.parseFile(emptyPath)).rejects.toThrow('Invalid compose file format');
+    });
   });
 });

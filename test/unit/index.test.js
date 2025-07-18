@@ -257,6 +257,49 @@ services:
       expect(result[0].image).toBe('nginx:alpine');
       expect(result[0].publishPort).toContain('80:80');
     });
+
+    it('should parse multiple services from compose file', () => {
+      const composeYaml = `
+version: '3'
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+  db:
+    image: postgres:13
+    volumes:
+      - db-data:/var/lib/postgresql/data
+`;
+      const result = podlet.parseCompose(composeYaml);
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(2);
+
+      const web = result.find(s => s.image === 'nginx:alpine');
+      const db = result.find(s => s.image === 'postgres:13');
+
+      expect(web).toBeDefined();
+      expect(web.publishPort).toContain('8080:80');
+
+      expect(db).toBeDefined();
+      expect(db.volume).toContain('db-data:/var/lib/postgresql/data');
+    });
+  });
+
+  describe('fromDockerRun', () => {
+    it('should be an alias for dockerRunToQuadlet', () => {
+      const dockerCommand = 'docker run -d --name test-app -p 8080:80 nginx:alpine';
+      const result = podlet.fromDockerRun(dockerCommand);
+      
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result).toContain('[Container]');
+      expect(result).toContain('Image=nginx:alpine');
+      expect(result).toContain('ContainerName=test-app');
+      expect(result).toContain('PublishPort=8080:80');
+    });
   });
 });
 
@@ -278,4 +321,6 @@ describe('createPodlet', () => {
     expect(podlet1.composeParser).not.toBe(podlet2.composeParser);
     expect(podlet1.quadletGenerator).not.toBe(podlet2.quadletGenerator);
   });
+
+
 });
