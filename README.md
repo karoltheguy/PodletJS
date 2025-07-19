@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/karoltheguy/PodletJS)
+[![NPM Deployment](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml)
 # PodletJS
 
 JavaScript port of [Podlet](https://github.com/containers/podlet)
