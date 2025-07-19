@@ -1,6 +1,6 @@
 # PodletJS Roadmap
 
-## Current Status: ✅ Feature Complete (v0.1.0)
+## Current Status: ✅ Feature Complete (v1.0.0)
 
 PodletJS successfully implements the core functionality of the original Podlet (Rust) with:
 - **Docker run command parsing** (40+ flags supported)
@@ -181,12 +181,3 @@ npx podlet-js compose docker-compose.yml --output ./quadlets/
 ## Contributing
 
 Send pull a requests if you're interested in implementing any of these features.
-
----
-
-## Version Planning
-
-- **v0.1.x**: Bug fixes and minor improvements
-- **v0.2.0**: CLI interface + Pod generation
-- **v0.3.0**: Build context handling + Version compatibility  
-- **v1.0.0**: Production hardening + Extended features
