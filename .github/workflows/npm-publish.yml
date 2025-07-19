@@ -32,6 +32,8 @@ jobs:
         run: testspace "[${{ github.workflow }}/${{ github.job}}] ./junit.xml"
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2.3.6
+      - name: Frogbot by JFrog
+        uses: jfrog/frogbot@v2.27.0
 
   #publish-npm:
   #  needs: build
