@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npm test
+      - run: npm test --coverage
 
       - uses: actions/checkout@v2
       - name: Testspace client install & config
