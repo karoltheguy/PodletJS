@@ -1,5 +1,5 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/karoltheguy/PodletJS)
-[![NPM Deployment](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml)
+[![NPM Deployment](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml/badge.svg?branch=main)](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
 ![Lines](./badges_output/lines.svg) ![Statements](./badges_output/statements.svg)  ![Branches](./badges_output/branches.svg)  ![Functions](./badges_output/functions.svg)
