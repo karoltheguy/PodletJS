@@ -1,6 +1,9 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/karoltheguy/PodletJS)
 [![NPM Deployment](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml/badge.svg?branch=main)](https://github.com/karoltheguy/podletjs/actions/workflows/npm-publish.yml)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![Coverage Status](https://coveralls.io/repos/github/karoltheguy/PodletJS/badge.svg?branch=main)](https://coveralls.io/github/karoltheguy/PodletJS?branch=main)
+[![Space Metric](https://karoltheguy.testspace.com/spaces/315045/badge?token=a5e4e76dda9a6c31b07597ded72f5900bf574fbe)](https://karoltheguy.testspace.com/spaces/315045?utm_campaign=metric&utm_medium=referral&utm_source=badge "Passing Test Cases")
+[![codecov](https://codecov.io/gh/karoltheguy/PodletJS/graph/badge.svg?token=NDPILSMFQ3)](https://codecov.io/gh/karoltheguy/PodletJS)
 
 ![Lines](./badges_output/lines.svg) ![Statements](./badges_output/statements.svg)  ![Branches](./badges_output/branches.svg)  ![Functions](./badges_output/functions.svg)
 # PodletJS
