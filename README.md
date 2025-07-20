@@ -228,7 +228,6 @@ test/
 ## Dependencies
 
 ### Runtime Dependencies
-- `js-yaml`: YAML parsing for Docker Compose files
 - `minimist`: Command line argument parsing
 - `composerize`: Convert Docker run commands to docker-compose format
 
