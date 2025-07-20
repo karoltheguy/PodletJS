@@ -6,6 +6,7 @@
 [![codecov](https://codecov.io/gh/karoltheguy/PodletJS/branch/main/graph/badge.svg?token=NDPILSMFQ3)](https://codecov.io/gh/karoltheguy/PodletJS)
 
 ![Lines](./badges_output/lines.svg) ![Statements](./badges_output/statements.svg)  ![Branches](./badges_output/branches.svg)  ![Functions](./badges_output/functions.svg)
+
 # PodletJS
 
 JavaScript port of [Podlet](https://github.com/containers/podlet)
@@ -32,6 +33,12 @@ Complete Docker Compose YAML parsing with multi-service support and systemd inte
 ## Installation
 
 ```bash
+npm install podletjs
+```
+
+## Developping
+
+```bash
 # Clone the repository
 git clone https://github.com/karoltheguy/podletjs.git
 cd podletjs
@@ -43,7 +50,7 @@ npm install
 ### Usage
 
 ```javascript
-import { PodletJS } from './src/index.js';
+import { PodletJS } from 'podletjs';
 
 const podlet = new PodletJS();
 
@@ -81,22 +88,14 @@ const composeQuadlets = podlet.composeToQuadlet(composeYaml, {
   install: { wantedBy: ['multi-user.target'] }
 });
 
-console.log('Web service:', composeQuadlets.web);
-console.log('DB service:', composeQuadlets.db);
-
-// Parse Docker run commands
-const dockerRunCommand = `docker run -d --name web-server -p 8080:80 -e NODE_ENV=production -v data:/app/data nginx:alpine`;
-const runQuadlet = podlet.runToQuadlet(dockerRunCommand, {
-  unit: { description: 'Web Server Container' },
-  service: { restart: 'always' },
-  install: { wantedBy: ['multi-user.target'] }
-});
-
-console.log('Docker run Quadlet:', runQuadlet);
+console.log('Web service filename:', composeQuadlets[0].filename);
+console.log('Web service:', composeQuadlets[0].content);
+console.log('DB service filename:', composeQuadlets[1].filename);
+console.log('DB service:', composeQuadlets[1].content);
 ```
 
 Outputs:
-1st Quadlet
+1st Quadlet (`web.container`)
 ```ini
 # Web service with dependency on db
 [Unit]
@@ -116,7 +115,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
-2nd Quadlet
+2nd Quadlet (`db.container`)
 ```ini
 [Unit]
 Description=My Application Stack
@@ -128,6 +127,37 @@ Image=postgres:15
 ContainerName=db
 Volume=db_data:/var/lib/postgresql/data
 Environment=POSTGRES_DB=myapp
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```javascript
+// Parse Docker run commands
+const dockerRunCommand = `docker run -d --name web-server -p 8080:80 -e NODE_ENV=production -v data:/app/data nginx:alpine`;
+const runQuadlet = podlet.dockerRunToQuadlet(dockerRunCommand, {
+  unit: { description: 'Web Server Container' },
+  service: { restart: 'always' },
+  install: { wantedBy: ['multi-user.target'] }
+});
+
+console.log('Docker run Quadlet:', runQuadlet);
+```
+
+Outputs:
+```ini
+[Unit]
+Description=Web Server Container
+
+[Container]
+Image=nginx:alpine
+ContainerName=web-server
+PublishPort=8080:80
+Volume=data:/app/data
+Environment=NODE_ENV=production
 
 [Service]
 Restart=always
