@@ -32,6 +32,15 @@ jobs:
         run: testspace "[${{ github.workflow }}/${{ github.job}}] ./junit.xml"
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2.3.6
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   publish-npm:
     needs: build
