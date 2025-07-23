@@ -64,6 +64,11 @@ jobs:
       run: |
         cd source
         npm test
+
+    - name: prepare bundle with webpack
+      run: |
+        npm install yaml composerize fs-extra webpack webpack-cli node-polyfill-webpack-plugin
+        npx webpack --config webpack.config.js
       
     - name: Checkout destination repo
       uses: actions/checkout@v4
@@ -77,8 +82,8 @@ jobs:
         # Create js directory if it doesn't exist
         mkdir -p destination/js
         
-        # Copy all JS files from source/src folder to destination js folder
-        cp source/src/*.js destination/js/
+        # Copy JS bundle from source/dist to destination js folder
+        cp source/dist/podletjs.js destination/js/
         
     - name: Commit and push to destination repo
       run: |
