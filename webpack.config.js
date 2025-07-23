@@ -1,7 +1,7 @@
 const path = require('path');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
-module.exports = {
+export default {
   entry: './src/index.js',
   output: {
     filename: 'podletjs.js',
