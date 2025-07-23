@@ -6,8 +6,10 @@ module.exports = {
   output: {
     filename: 'podletjs.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'PodletJS',
-    libraryTarget: 'umd',
+    library: {
+      name: 'PodletJS',
+      type: 'umd'
+    },
     globalObject: 'this'
   },
   plugins: [
