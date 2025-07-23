@@ -68,7 +68,7 @@ jobs:
     - name: prepare bundle with webpack
       run: |
         npm install yaml composerize fs-extra webpack webpack-cli node-polyfill-webpack-plugin
-        npx webpack --config webpack.config.js
+        npx webpack --config source/webpack.config.js
       
     - name: Checkout destination repo
       uses: actions/checkout@v4
